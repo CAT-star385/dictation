@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文生字練習園地</title>
+<meta name="description" content="中文生字聽寫與測驗練習工具">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6e3;
+    --paper: #fffdf5;
+    --ink: #2b2b2b;
+    --accent: #d94436;
+    --accent-soft: #f4a698;
+    --primary: #2c7da0;
+    --primary-dark: #1d5670;
+    --secondary: #f4a261;
+    --success: #4a9d6f;
+    --purple: #7a5195;
+    --muted: #9b9b9b;
+    --line: #d8c9a3;
+    --shadow: 0 4px 16px rgba(60, 40, 20, 0.12);
+    --shadow-lg: 0 8px 32px rgba(60, 40, 20, 0.18);
+    --shadow-xl: 0 12px 40px rgba(60, 40, 20, 0.22);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    min-height: 100%;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 10%, rgba(244, 162, 97, 0.18) 0%, transparent 45%),
+      radial-gradient(circle at 85% 85%, rgba(44, 125, 160, 0.14) 0%, transparent 45%),
+      radial-gradient(circle at 50% 50%, rgba(122, 81, 149, 0.06) 0%, transparent 60%),
+      repeating-linear-gradient(45deg, transparent 0, transparent 60px, rgba(0,0,0,0.015) 60px, rgba(0,0,0,0.015) 61px);
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  .app {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px 24px 60px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ====== Header ====== */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    position: relative;
+  }
+  /* 裝飾性印章 */
+  .seal {
+    position: absolute;
+    top: -10px;
+    right: 20px;
+    width: 64px;
+    height: 64px;
+    background: var(--accent);
+    color: white;
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 900;
+    font-size: 18px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-8deg);
+    box-shadow: 0 4px 12px rgba(217, 68, 54, 0.35);
+    letter-spacing: 2px;
+    line-height: 1.1;
+    text-align: center;
+    animation: sealIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes sealIn {
+    0% { transform: rotate(-30deg) scale(0); opacity: 0; }
+    100% { transform: rotate(-8deg) scale(1); opacity: 1; }
+  }
+  header h1 {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 900;
+    font-size: clamp(36px, 6vw, 56px);
+    color: var(--primary-dark);
+    letter-spacing: 8px;
+    margin-bottom: 12px;
+    text-shadow: 2px 2px 0 rgba(217, 68, 54, 0.08);
+  }
+  header h1 .deco {
+    color: var(--accent);
+    font-size: 0.7em;
+    margin: 0 12px;
+    vertical-align: middle;
+  }
+  header .subtitle {
+    color: var(--muted);
+    font-size: clamp(14px, 2vw, 17px);
+    letter-spacing: 4px;
+    font-weight: 500;
+  }
+  header .divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+    color: var(--accent);
+  }
+  header .divider::before,
+  header .divider::after {
+    content: "";
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(to right, transparent, var(--line), transparent);
+  }
+
+  /* ====== 卡片區 ====== */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 24px;
+    flex: 1;
+    align-content: center;
+    margin-bottom: 40px;
+  }
+  .card {
+    background: var(--paper);
+    border-radius: 22px;
+    padding: 32px 24px 28px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lg);
+    text-decoration: none;
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
+    animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    cursor: pointer;
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card:nth-child(1) { animation-delay: 0.1s; }
+  .card:nth-child(2) { animation-delay: 0.2s; }
+  .card:nth-child(3) { animation-delay: 0.3s; }
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-xl);
+  }
+  .card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 8px;
+  }
+  .card.c1::before { background: linear-gradient(90deg, var(--primary), #56a3c4); }
+  .card.c2::before { background: linear-gradient(90deg, var(--secondary), #f5c08a); }
+  .card.c3::before { background: linear-gradient(90deg, var(--purple), #a679c4); }
+
+  /* 卡片內裝飾水墨圖 */
+  .card-bg {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 220px;
+    font-weight: 900;
+    line-height: 1;
+    opacity: 0.05;
+    pointer-events: none;
+    user-select: none;
+    color: var(--ink);
+  }
+
+  .card-icon {
+    font-size: 56px;
+    margin-bottom: 14px;
+    line-height: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  }
+  .card-title {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+    color: var(--primary-dark);
+  }
+  .card.c2 .card-title { color: #c47432; }
+  .card.c3 .card-title { color: var(--purple); }
+
+  .card-sub {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+  }
+  .card-desc {
+    color: #5c503a;
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    flex: 1;
+  }
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 22px;
+  }
+  .card-tag {
+    background: #f0e6cc;
+    color: #6b5a3e;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .card.c1 .card-tag { background: #e5f1f7; color: var(--primary-dark); }
+  .card.c2 .card-tag { background: #fceedd; color: #c47432; }
+  .card.c3 .card-tag { background: #ede5f3; color: var(--purple); }
+
+  .card-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: var(--ink);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 99px;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    align-self: flex-start;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
+  }
+  .card.c1 .card-cta { background: var(--primary); box-shadow: 0 3px 0 var(--primary-dark); }
+  .card.c2 .card-cta { background: var(--secondary); box-shadow: 0 3px 0 #c47432; }
+  .card.c3 .card-cta { background: var(--purple); box-shadow: 0 3px 0 #573a6b; }
+  .card:hover .card-cta { transform: translateX(4px); }
+  .card-cta .arrow {
+    transition: transform 0.2s;
+  }
+  .card:hover .card-cta .arrow { transform: translateX(3px); }
+
+  /* ====== Footer ====== */
+  footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 2px;
+    padding: 20px 0 0;
+    border-top: 1px dashed var(--line);
+  }
+  footer .heart { color: var(--accent); }
+
+  /* ====== RWD ====== */
+  @media (max-width: 600px) {
+    .app { padding: 28px 16px 40px; }
+    header { margin-bottom: 32px; }
+    .seal { width: 52px; height: 52px; font-size: 14px; right: 8px; }
+    header h1 { letter-spacing: 5px; }
+    .cards { gap: 18px; }
+    .card { padding: 26px 20px 22px; }
+    .card-icon { font-size: 48px; }
+    .card-title { font-size: 22px; }
+    .card-bg { font-size: 180px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="seal">中文<br>練習</div>
+    <h1><span class="deco">◆</span>生字練習園地<span class="deco">◆</span></h1>
+    <div class="subtitle">聽 寫 ・ 認 字 ・ 知 義</div>
+    <div class="divider">❖</div>
+  </header>
+
+  <main class="cards">
+
+    <a href="dictation.html" class="card c1">
+      <div class="card-bg">寫</div>
+      <div class="card-icon">📝</div>
+      <div class="card-title">聽寫練習(一)</div>
+      <div class="card-sub">L E S S O N　・　1</div>
+      <div class="card-desc">
+        聽老師朗讀注音,把語詞寫在紙上。第一課單元生字,共 36 題。
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">🔊 朗讀</span>
+        <span class="card-tag">🐢 放慢</span>
+        <span class="card-tag">🔁 自動</span>
+      </div>
+      <span class="card-cta">開始練習 <span class="arrow">→</span></span>
+    </a>
+
+    <a href="dictation2.html" class="card c2">
+      <div class="card-bg">音</div>
+      <div class="card-icon">🎧</div>
+      <div class="card-title">聽寫練習(二)</div>
+      <div class="card-sub">L E S S O N　・　2</div>
+      <div class="card-desc">
+        第二課單元生字,共 54 題;支援自訂詞語題庫,任何時候都能練。
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">🔊 朗讀</span>
+        <span class="card-tag">⚙️ 自訂題庫</span>
+        <span class="card-tag">🎯 結算頁</span>
+      </div>
+      <span class="card-cta">開始練習 <span class="arrow">→</span></span>
+    </a>
+
+    <a href="quiz.html" class="card c3">
+      <div class="card-bg">智</div>
+      <div class="card-icon">🎯</div>
+      <div class="card-title">字義測驗</div>
+      <div class="card-sub">Q U I Z</div>
+      <div class="card-desc">
+        看詞語選意思,或看意思選詞語,綜合測驗你的中文字義理解力。
+      </div>
+      <div class="card-tags">
+        <span class="card-tag">📖 選意思</span>
+        <span class="card-tag">🔤 選字</span>
+        <span class="card-tag">🎲 混合</span>
+      </div>
+      <span class="card-cta">開始測驗 <span class="arrow">→</span></span>
+    </a>
+
+  </main>
+
+  <footer>
+    Made with <span class="heart">❤</span> for 中文學習 ・ 用心 寫 ・ 用 耳 聽 ・ 用 腦 想
+  </footer>
+
+</div>
+</body>
+</html>
