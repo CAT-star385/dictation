@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>中文生字練習園地</title>
-<meta name="description" content="中文生字聽寫與測驗練習工具">
+<title>中文生字聽寫練習</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3.18.2/dist/index.js"></script>
 <style>
   :root {
     --bg: #fdf6e3;
@@ -18,264 +18,424 @@
     --primary: #2c7da0;
     --primary-dark: #1d5670;
     --secondary: #f4a261;
-    --success: #4a9d6f;
-    --purple: #7a5195;
     --muted: #9b9b9b;
     --line: #d8c9a3;
     --shadow: 0 4px 16px rgba(60, 40, 20, 0.12);
     --shadow-lg: 0 8px 32px rgba(60, 40, 20, 0.18);
-    --shadow-xl: 0 12px 40px rgba(60, 40, 20, 0.22);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
-    min-height: 100%;
+    height: 100%;
     font-family: 'Noto Sans TC', sans-serif;
     color: var(--ink);
     background: var(--bg);
     background-image:
-      radial-gradient(circle at 15% 10%, rgba(244, 162, 97, 0.18) 0%, transparent 45%),
-      radial-gradient(circle at 85% 85%, rgba(44, 125, 160, 0.14) 0%, transparent 45%),
-      radial-gradient(circle at 50% 50%, rgba(122, 81, 149, 0.06) 0%, transparent 60%),
+      radial-gradient(circle at 20% 10%, rgba(244, 162, 97, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 80%, rgba(44, 125, 160, 0.10) 0%, transparent 40%),
       repeating-linear-gradient(45deg, transparent 0, transparent 60px, rgba(0,0,0,0.015) 60px, rgba(0,0,0,0.015) 61px);
-    -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
   }
-  .app {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 40px 24px 60px;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
+  .app { max-width: 960px; margin: 0 auto; padding: 24px 20px 60px; }
 
-  /* ====== Header ====== */
-  header {
-    text-align: center;
-    margin-bottom: 48px;
-    position: relative;
-  }
-  /* 裝飾性印章 */
-  .seal {
-    position: absolute;
-    top: -10px;
-    right: 20px;
-    width: 64px;
-    height: 64px;
-    background: var(--accent);
-    color: white;
-    font-family: 'Noto Serif TC', serif;
-    font-weight: 900;
-    font-size: 18px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transform: rotate(-8deg);
-    box-shadow: 0 4px 12px rgba(217, 68, 54, 0.35);
-    letter-spacing: 2px;
-    line-height: 1.1;
-    text-align: center;
-    animation: sealIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes sealIn {
-    0% { transform: rotate(-30deg) scale(0); opacity: 0; }
-    100% { transform: rotate(-8deg) scale(1); opacity: 1; }
-  }
+  header { text-align: center; margin-bottom: 24px; padding: 20px 0 12px; position: relative; }
   header h1 {
     font-family: 'Noto Serif TC', serif;
     font-weight: 900;
-    font-size: clamp(36px, 6vw, 56px);
+    font-size: clamp(28px, 4vw, 40px);
     color: var(--primary-dark);
-    letter-spacing: 8px;
-    margin-bottom: 12px;
-    text-shadow: 2px 2px 0 rgba(217, 68, 54, 0.08);
-  }
-  header h1 .deco {
-    color: var(--accent);
-    font-size: 0.7em;
-    margin: 0 12px;
-    vertical-align: middle;
-  }
-  header .subtitle {
-    color: var(--muted);
-    font-size: clamp(14px, 2vw, 17px);
     letter-spacing: 4px;
-    font-weight: 500;
+    margin-bottom: 6px;
   }
-  header .divider {
+  header h1 .deco { color: var(--accent); font-size: 0.85em; margin: 0 8px; }
+  header .sub { color: var(--muted); font-size: 14px; letter-spacing: 2px; }
+
+  .progress-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    margin-top: 18px;
-    color: var(--accent);
+    gap: 14px;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    background: var(--paper);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--line);
   }
-  header .divider::before,
-  header .divider::after {
-    content: "";
-    height: 1px;
-    width: 80px;
-    background: linear-gradient(to right, transparent, var(--line), transparent);
+  .progress-text { font-weight: 700; color: var(--primary-dark); white-space: nowrap; font-size: 15px; }
+  .progress-bar {
+    flex: 1;
+    height: 10px;
+    background: #ece1c5;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 99px;
+    transition: width 0.4s ease;
+    width: 0%;
   }
 
-  /* ====== 卡片區 ====== */
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 24px;
-    flex: 1;
-    align-content: center;
-    margin-bottom: 40px;
-  }
   .card {
     background: var(--paper);
-    border-radius: 22px;
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
     padding: 32px 24px 28px;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-lg);
-    text-decoration: none;
-    color: var(--ink);
-    display: flex;
-    flex-direction: column;
     position: relative;
     overflow: hidden;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s;
-    animation: cardIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-    cursor: pointer;
-  }
-  @keyframes cardIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .card:nth-child(1) { animation-delay: 0.1s; }
-  .card:nth-child(2) { animation-delay: 0.2s; }
-  .card:nth-child(3) { animation-delay: 0.3s; }
-  .card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-xl);
   }
   .card::before {
     content: "";
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 8px;
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
   }
-  .card.c1::before { background: linear-gradient(90deg, var(--primary), #56a3c4); }
-  .card.c2::before { background: linear-gradient(90deg, var(--secondary), #f5c08a); }
-  .card.c3::before { background: linear-gradient(90deg, var(--purple), #a679c4); }
+  .card-label {
+    display: inline-block;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--primary);
+    font-weight: 700;
+    background: #e5f1f7;
+    padding: 4px 12px;
+    border-radius: 99px;
+    margin-bottom: 18px;
+  }
 
-  /* 卡片內裝飾水墨圖 */
-  .card-bg {
-    position: absolute;
-    bottom: -30px;
-    right: -30px;
-    font-family: 'Noto Serif TC', serif;
-    font-size: 220px;
-    font-weight: 900;
+  .zhuyin-area {
+    min-height: 320px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 16px 0 28px;
+    background: linear-gradient(transparent 0%, transparent calc(100% - 2px), var(--line) 100%) repeat-x;
+    border-radius: 12px;
+  }
+  .zhuyin-row {
+    display: flex;
+    flex-direction: row;
+    gap: 28px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .syllable {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 4px;
+    position: relative;
+    padding: 6px 0;
+  }
+  .bopomofo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 500;
+    font-size: clamp(36px, 5.5vw, 52px);
+    line-height: 1.05;
+    color: var(--ink);
+  }
+  .bopomofo span { display: block; line-height: 1.05; }
+  .tone {
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--accent);
+    font-weight: 700;
+    font-size: clamp(22px, 3.2vw, 30px);
     line-height: 1;
-    opacity: 0.05;
-    pointer-events: none;
-    user-select: none;
+    align-self: center;
+    margin-left: 2px;
+  }
+  .tone-light {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--accent);
+    font-weight: 900;
+    font-size: 28px;
+  }
+  .syllable.light .bopomofo { margin-top: 12px; }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 22px;
+  }
+  .btn {
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    border: none;
+    border-radius: 99px;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    letter-spacing: 1px;
+    box-shadow: 0 3px 0 rgba(0,0,0,0.08);
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.1); }
+  .btn:active:not(:disabled) { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-primary:hover:not(:disabled) { background: var(--primary-dark); }
+  .btn-secondary { background: var(--secondary); color: white; }
+  .btn-secondary:hover:not(:disabled) { background: #e08a48; }
+  .btn-ghost { background: #f0e6cc; color: var(--ink); }
+  .btn-ghost:hover:not(:disabled) { background: #e8dab5; }
+  .btn-ghost.active { background: var(--accent); color: white; }
+  .btn-ghost.active:hover:not(:disabled) { background: #c33a2c; }
+
+  .nav-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 22px;
+    gap: 12px;
+  }
+  .nav-row .btn { flex: 1; max-width: 200px; justify-content: center; }
+
+  .answer-section, .answer-toggle, .answer-list, .arrow { display: none !important; }
+
+
+  .tip {
+    text-align: center;
+    margin-top: 18px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .tip kbd {
+    background: var(--paper);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    font-family: monospace;
+    font-size: 12px;
+    color: var(--primary-dark);
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .zhuyin-row { animation: fadeIn 0.4s ease; }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+  .btn.speaking { animation: pop 0.6s ease; }
+
+  /* 結算頁 */
+  .finish-card {
+    text-align: center;
+    padding: 40px 24px 32px;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  .finish-icon {
+    font-size: 72px;
+    margin-bottom: 12px;
+    animation: bounce 1.2s ease infinite;
+  }
+  .finish-title {
+    font-family: 'Noto Serif TC', serif;
+    font-weight: 900;
+    color: var(--primary-dark);
+    font-size: clamp(24px, 4vw, 32px);
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+  .finish-sub {
+    color: var(--muted);
+    font-size: 16px;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+  }
+  .finish-sub b { color: var(--primary); font-size: 20px; }
+  .finish-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .finish-actions .btn { width: 100%; justify-content: center; }
+
+  /* 結算頁的答案區 */
+  .answer-block {
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px dashed var(--line);
+    text-align: left;
+    animation: fadeIn 0.4s ease;
+  }
+  .answer-block-title {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .answer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px;
+  }
+  .answer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #faf3df;
+    border-radius: 10px;
+    font-family: 'Noto Serif TC', serif;
+    border: 1px solid var(--line);
+  }
+  .answer-item .num {
+    font-weight: 700;
+    color: var(--primary);
+    font-size: 13px;
+    min-width: 28px;
+    background: white;
+    border-radius: 99px;
+    padding: 2px 6px;
+    text-align: center;
+  }
+  .answer-item .word {
+    font-weight: 500;
+    font-size: 17px;
+    letter-spacing: 1px;
     color: var(--ink);
   }
 
-  .card-icon {
-    font-size: 56px;
-    margin-bottom: 14px;
-    line-height: 1;
-    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+  @media (max-width: 600px) {
+    .app { padding: 16px 12px 40px; }
+    .card { padding: 24px 16px 20px; }
+    .zhuyin-row { gap: 18px; }
+    .nav-row .btn { padding: 12px 16px; font-size: 14px; }
+    .controls .btn { padding: 10px 18px; font-size: 14px; }
   }
-  .card-title {
-    font-family: 'Noto Serif TC', serif;
-    font-weight: 900;
-    font-size: 24px;
-    letter-spacing: 4px;
-    margin-bottom: 6px;
-    color: var(--primary-dark);
-  }
-  .card.c2 .card-title { color: #c47432; }
-  .card.c3 .card-title { color: var(--purple); }
 
-  .card-sub {
-    font-size: 13px;
-    color: var(--muted);
-    letter-spacing: 2px;
-    margin-bottom: 18px;
-  }
-  .card-desc {
-    color: #5c503a;
-    font-size: 14px;
-    line-height: 1.7;
-    margin-bottom: 20px;
-    flex: 1;
-  }
-  .card-tags {
+  /* 題庫切換列 */
+  .bank-bar {
     display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 6px;
-    margin-bottom: 22px;
   }
-  .card-tag {
-    background: #f0e6cc;
-    color: #6b5a3e;
-    font-size: 12px;
-    padding: 4px 10px;
-    border-radius: 99px;
+  .bank-info { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .bank-badge {
+    font-weight: 700;
+    color: var(--primary-dark);
+    font-size: 14px;
     letter-spacing: 1px;
-    font-weight: 500;
   }
-  .card.c1 .card-tag { background: #e5f1f7; color: var(--primary-dark); }
-  .card.c2 .card-tag { background: #fceedd; color: #c47432; }
-  .card.c3 .card-tag { background: #ede5f3; color: var(--purple); }
+  .bank-badge.custom { color: var(--accent); }
+  .bank-count { color: var(--muted); font-size: 13px; }
+  .btn-mini {
+    background: #f0e6cc;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 6px 14px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+  }
+  .btn-mini:hover { background: #e8dab5; transform: translateY(-1px); }
 
-  .card-cta {
-    display: inline-flex;
+  /* 對話框 */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 100;
+    display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    background: var(--ink);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 99px;
-    font-weight: 700;
-    font-size: 15px;
+    padding: 16px;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-card {
+    background: var(--paper);
+    border-radius: 18px;
+    padding: 24px 22px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--line);
+    animation: fadeIn 0.3s ease;
+  }
+  .modal-title {
+    font-family: 'Noto Serif TC', serif;
+    color: var(--primary-dark);
+    font-size: 22px;
+    margin-bottom: 10px;
     letter-spacing: 2px;
-    transition: all 0.2s;
-    align-self: flex-start;
-    box-shadow: 0 3px 0 rgba(0,0,0,0.15);
   }
-  .card.c1 .card-cta { background: var(--primary); box-shadow: 0 3px 0 var(--primary-dark); }
-  .card.c2 .card-cta { background: var(--secondary); box-shadow: 0 3px 0 #c47432; }
-  .card.c3 .card-cta { background: var(--purple); box-shadow: 0 3px 0 #573a6b; }
-  .card:hover .card-cta { transform: translateX(4px); }
-  .card-cta .arrow {
-    transition: transform 0.2s;
-  }
-  .card:hover .card-cta .arrow { transform: translateX(3px); }
-
-  /* ====== Footer ====== */
-  footer {
-    text-align: center;
+  .modal-desc {
     color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 2px;
-    padding: 20px 0 0;
-    border-top: 1px dashed var(--line);
+    font-size: 14px;
+    line-height: 1.7;
+    margin-bottom: 14px;
   }
-  footer .heart { color: var(--accent); }
-
-  /* ====== RWD ====== */
-  @media (max-width: 600px) {
-    .app { padding: 28px 16px 40px; }
-    header { margin-bottom: 32px; }
-    .seal { width: 52px; height: 52px; font-size: 14px; right: 8px; }
-    header h1 { letter-spacing: 5px; }
-    .cards { gap: 18px; }
-    .card { padding: 26px 20px 22px; }
-    .card-icon { font-size: 48px; }
-    .card-title { font-size: 22px; }
-    .card-bg { font-size: 180px; }
+  #customInput {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    background: #fffdf5;
+    color: var(--ink);
+    resize: vertical;
+  }
+  #customInput:focus { outline: none; border-color: var(--primary); }
+  .modal-error {
+    background: #fce8e6;
+    border-left: 4px solid var(--accent);
+    color: #802318;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 16px;
+    flex-wrap: wrap;
+  }
+  .modal-actions .btn { flex: 0 0 auto; padding: 10px 18px; }
+  @media (max-width: 500px) {
+    .modal-actions .btn { flex: 1; padding: 10px 14px; font-size: 14px; letter-spacing: 0; }
   }
 </style>
 </head>
@@ -283,68 +443,676 @@
 <div class="app">
 
   <header>
-    <div class="seal">中文<br>練習</div>
-    <h1><span class="deco">◆</span>生字練習園地<span class="deco">◆</span></h1>
-    <div class="subtitle">聽 寫 ・ 認 字 ・ 知 義</div>
-    <div class="divider">❖</div>
+    <h1><span class="deco">◆</span>聽寫練習<span class="deco">◆</span></h1>
+    <div class="sub">聽 注 音 ・ 寫 語 詞</div>
   </header>
 
-  <main class="cards">
+  <!-- 題庫切換列 -->
+  <div class="bank-bar">
+    <div class="bank-info">
+      <span class="bank-badge" id="bankBadge">📚 預設題庫</span>
+      <span class="bank-count" id="bankCount"></span>
+    </div>
+    <button class="btn-mini" id="btnOpenCustom">⚙️ 自訂題庫</button>
+  </div>
 
-    <a href="dictation.html" class="card c1">
-      <div class="card-bg">寫</div>
-      <div class="card-icon">📝</div>
-      <div class="card-title">聽寫練習(一)</div>
-      <div class="card-sub">L E S S O N　・　1</div>
-      <div class="card-desc">
-        聽老師朗讀注音,把語詞寫在紙上。第一課單元生字,共 36 題。
+  <!-- 自訂題庫對話框 -->
+  <div class="modal" id="customModal" style="display:none;">
+    <div class="modal-card">
+      <h2 class="modal-title">✏️ 自訂聽寫題庫</h2>
+      <p class="modal-desc">
+        每行輸入一個詞語(可中英、可成語),系統會自動轉成注音。<br>
+        生僻字或破音字若轉得不準,可以手動調整(進階)。
+      </p>
+      <textarea id="customInput" placeholder="例如:&#10;露面&#10;曝光&#10;娓娓道來&#10;深居簡出"></textarea>
+      <div class="modal-error" id="customError" style="display:none;"></div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnCancelCustom">取消</button>
+        <button class="btn btn-primary" id="btnApplyCustom">套用</button>
       </div>
-      <div class="card-tags">
-        <span class="card-tag">🔊 朗讀</span>
-        <span class="card-tag">🐢 放慢</span>
-        <span class="card-tag">🔁 自動</span>
-      </div>
-      <span class="card-cta">開始練習 <span class="arrow">→</span></span>
-    </a>
+    </div>
+  </div>
 
-    <a href="dictation2.html" class="card c2">
-      <div class="card-bg">音</div>
-      <div class="card-icon">🎧</div>
-      <div class="card-title">聽寫練習(二)</div>
-      <div class="card-sub">L E S S O N　・　2</div>
-      <div class="card-desc">
-        第二課單元生字,共 54 題;支援自訂詞語題庫,任何時候都能練。
-      </div>
-      <div class="card-tags">
-        <span class="card-tag">🔊 朗讀</span>
-        <span class="card-tag">⚙️ 自訂題庫</span>
-        <span class="card-tag">🎯 結算頁</span>
-      </div>
-      <span class="card-cta">開始練習 <span class="arrow">→</span></span>
-    </a>
+  <div class="progress-row">
+    <div class="progress-text" id="progressText">第 1 / 1 題</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
 
-    <a href="quiz.html" class="card c3">
-      <div class="card-bg">智</div>
-      <div class="card-icon">🎯</div>
-      <div class="card-title">字義測驗</div>
-      <div class="card-sub">Q U I Z</div>
-      <div class="card-desc">
-        看詞語選意思,或看意思選詞語,綜合測驗你的中文字義理解力。
-      </div>
-      <div class="card-tags">
-        <span class="card-tag">📖 選意思</span>
-        <span class="card-tag">🔤 選字</span>
-        <span class="card-tag">🎲 混合</span>
-      </div>
-      <span class="card-cta">開始測驗 <span class="arrow">→</span></span>
-    </a>
+  <div class="custom-bar">
+    <button class="btn btn-ghost btn-small" id="btnOpenCustom">✏️ 自訂題庫</button>
+    <button class="btn btn-ghost btn-small" id="btnUseDefault" style="display:none;">📚 回預設題庫</button>
+    <span class="custom-badge" id="customBadge" style="display:none;">自訂中</span>
+  </div>
 
-  </main>
+  <div class="card" id="quizCard">
+    <span class="card-label">注 音</span>
+    <div class="zhuyin-area" id="zhuyinArea"></div>
 
-  <footer>
-    Made with <span class="heart">❤</span> for 中文學習 ・ 用心 寫 ・ 用 耳 聽 ・ 用 腦 想
-  </footer>
+    <div class="controls">
+      <button class="btn btn-primary" id="btnPlay">🔊 朗讀</button>
+      <button class="btn btn-secondary" id="btnSlow">🐢 放慢</button>
+      <button class="btn btn-ghost" id="btnAuto" aria-pressed="false">🔁 自動朗讀:關</button>
+    </div>
+
+    <div class="nav-row">
+      <button class="btn btn-ghost" id="btnPrev">← 上一題</button>
+      <button class="btn btn-ghost" id="btnNext">下一題 →</button>
+    </div>
+  </div>
+
+  <!-- 結算頁 -->
+  <div class="card finish-card" id="finishCard" style="display:none;">
+    <div class="finish-icon">🎉</div>
+    <h2 class="finish-title">恭喜!聽寫完成</h2>
+    <div class="finish-sub">本次共 <b id="finishCount">0</b> 題,可以對答案囉</div>
+
+    <div class="finish-actions">
+      <button class="btn btn-primary" id="btnShowAll">📖 顯示全部答案</button>
+      <button class="btn btn-secondary" id="btnRestart">↻ 再考一次</button>
+      <button class="btn btn-ghost" id="btnBack">← 回到題目</button>
+    </div>
+
+    <!-- 答案清單(預設隱藏,按下顯示答案後出現) -->
+    <div class="answer-block" id="answerBlock" style="display:none;">
+      <div class="answer-block-title">📋 本次考題順序與答案</div>
+      <div class="answer-grid" id="answerGrid"></div>
+    </div>
+  </div>
+
+  <div class="tip">提示:可用 <kbd>←</kbd> <kbd>→</kbd> 切換題目,<kbd>空白鍵</kbd> 朗讀</div>
 
 </div>
+
+<!-- 自訂題庫 Modal -->
+<div class="modal-mask" id="customModal" style="display:none;">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>✏️ 自訂聽寫題庫</h3>
+      <button class="modal-close" id="btnCloseCustom" title="關閉">✕</button>
+    </div>
+    <div class="modal-body">
+      <p class="modal-tip">每一行輸入一個詞語,系統會自動標注音。</p>
+      <textarea id="customInput" placeholder="例如:&#10;玫瑰&#10;蝴蝶&#10;望梅止渴"></textarea>
+
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="btnPreview">🔍 查注音</button>
+        <button class="btn btn-secondary" id="btnClear">🗑️ 清空</button>
+      </div>
+
+      <div class="preview-area" id="previewArea" style="display:none;">
+        <div class="preview-title">📝 注音預覽(可手動修改)</div>
+        <div class="preview-list" id="previewList"></div>
+        <p class="preview-note" id="previewNote"></p>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="btnCancelCustom">取消</button>
+      <button class="btn btn-primary" id="btnStartCustom" disabled>開始練習</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ========================================================
+   題庫
+   ======================================================== */
+const QUESTIONS = [
+  { word:"露面", syllables:[{b:"ㄌㄡ",t:"4"},{b:"ㄇㄧㄢ",t:"4"}] },
+  { word:"露白", syllables:[{b:"ㄌㄡ",t:"4"},{b:"ㄅㄞ",t:"2"}] },
+  { word:"露出馬腳", syllables:[{b:"ㄌㄡ",t:"4"},{b:"ㄔㄨ",t:"1"},{b:"ㄇㄚ",t:"3"},{b:"ㄐㄧㄠ",t:"3"}] },
+  { word:"足不出戶", syllables:[{b:"ㄗㄨ",t:"2"},{b:"ㄅㄨ",t:"4"},{b:"ㄔㄨ",t:"1"},{b:"ㄏㄨ",t:"4"}] },
+  { word:"深居簡出", syllables:[{b:"ㄕㄣ",t:"1"},{b:"ㄐㄩ",t:"1"},{b:"ㄐㄧㄢ",t:"3"},{b:"ㄔㄨ",t:"1"}] },
+  { word:"露營", syllables:[{b:"ㄌㄨ",t:"4"},{b:"ㄧㄥ",t:"2"}] },
+  { word:"流露", syllables:[{b:"ㄌㄧㄡ",t:"2"},{b:"ㄌㄨ",t:"4"}] },
+  { word:"原形畢露", syllables:[{b:"ㄩㄢ",t:"2"},{b:"ㄒㄧㄥ",t:"2"},{b:"ㄅㄧ",t:"4"},{b:"ㄌㄨ",t:"4"}] },
+  { word:"瀑布", syllables:[{b:"ㄆㄨ",t:"4"},{b:"ㄅㄨ",t:"4"}] },
+  { word:"飛瀑", syllables:[{b:"ㄈㄟ",t:"1"},{b:"ㄆㄨ",t:"4"}] },
+  { word:"飛瀑流泉", syllables:[{b:"ㄈㄟ",t:"1"},{b:"ㄆㄨ",t:"4"},{b:"ㄌㄧㄡ",t:"2"},{b:"ㄑㄩㄢ",t:"2"}] },
+  { word:"拋頭露面", syllables:[{b:"ㄆㄠ",t:"1"},{b:"ㄊㄡ",t:"2"},{b:"ㄌㄡ",t:"4"},{b:"ㄇㄧㄢ",t:"4"}] },
+  { word:"編譯", syllables:[{b:"ㄅㄧㄢ",t:"1"},{b:"ㄧ",t:"4"}] },
+  { word:"翻譯", syllables:[{b:"ㄈㄢ",t:"1"},{b:"ㄧ",t:"4"}] },
+  { word:"了無牽掛", syllables:[{b:"ㄌㄧㄠ",t:"3"},{b:"ㄨ",t:"2"},{b:"ㄑㄧㄢ",t:"1"},{b:"ㄍㄨㄚ",t:"4"}] },
+  { word:"千鈞重負", syllables:[{b:"ㄑㄧㄢ",t:"1"},{b:"ㄐㄩㄣ",t:"1"},{b:"ㄓㄨㄥ",t:"4"},{b:"ㄈㄨ",t:"4"}] },
+  { word:"曝光", syllables:[{b:"ㄆㄨ",t:"4"},{b:"ㄍㄨㄤ",t:"1"}] },
+  { word:"曝晒", syllables:[{b:"ㄆㄨ",t:"4"},{b:"ㄕㄞ",t:"4"}] },
+  { word:"一曝十寒", syllables:[{b:"ㄧ",t:"1"},{b:"ㄆㄨ",t:"4"},{b:"ㄕ",t:"2"},{b:"ㄏㄢ",t:"2"}] },
+  { word:"抉擇", syllables:[{b:"ㄐㄩㄝ",t:"2"},{b:"ㄗㄜ",t:"2"}] },
+  { word:"選擇", syllables:[{b:"ㄒㄩㄢ",t:"3"},{b:"ㄗㄜ",t:"2"}] },
+  { word:"口不擇言", syllables:[{b:"ㄎㄡ",t:"3"},{b:"ㄅㄨ",t:"4"},{b:"ㄗㄜ",t:"2"},{b:"ㄧㄢ",t:"2"}] },
+  { word:"如釋重負", syllables:[{b:"ㄖㄨ",t:"2"},{b:"ㄕ",t:"4"},{b:"ㄓㄨㄥ",t:"4"},{b:"ㄈㄨ",t:"4"}] },
+  { word:"釋懷", syllables:[{b:"ㄕ",t:"4"},{b:"ㄏㄨㄞ",t:"2"}] },
+  { word:"詮釋", syllables:[{b:"ㄑㄩㄢ",t:"2"},{b:"ㄕ",t:"4"}] },
+  { word:"手不釋卷", syllables:[{b:"ㄕㄡ",t:"3"},{b:"ㄅㄨ",t:"4"},{b:"ㄕ",t:"4"},{b:"ㄐㄩㄢ",t:"4"}] },
+  { word:"不屑一顧", syllables:[{b:"ㄅㄨ",t:"4"},{b:"ㄒㄧㄝ",t:"4"},{b:"ㄧ",t:"1"},{b:"ㄍㄨ",t:"4"}] },
+  { word:"另眼相看", syllables:[{b:"ㄌㄧㄥ",t:"4"},{b:"ㄧㄢ",t:"3"},{b:"ㄒㄧㄤ",t:"1"},{b:"ㄎㄢ",t:"4"}] },
+  { word:"爆滿", syllables:[{b:"ㄅㄠ",t:"4"},{b:"ㄇㄢ",t:"3"}] },
+  { word:"爆裂", syllables:[{b:"ㄅㄠ",t:"4"},{b:"ㄌㄧㄝ",t:"4"}] },
+  { word:"大爆冷門", syllables:[{b:"ㄉㄚ",t:"4"},{b:"ㄅㄠ",t:"4"},{b:"ㄌㄥ",t:"3"},{b:"ㄇㄣ",t:"2"}] },
+  { word:"嗤之以鼻", syllables:[{b:"ㄔ",t:"1"},{b:"ㄓ",t:"1"},{b:"ㄧ",t:"3"},{b:"ㄅㄧ",t:"2"}] },
+  { word:"救濟", syllables:[{b:"ㄐㄧㄡ",t:"4"},{b:"ㄐㄧ",t:"4"}] },
+  { word:"濟世", syllables:[{b:"ㄐㄧ",t:"4"},{b:"ㄕ",t:"4"}] },
+  { word:"濟弱扶傾", syllables:[{b:"ㄐㄧ",t:"4"},{b:"ㄖㄨㄛ",t:"4"},{b:"ㄈㄨ",t:"2"},{b:"ㄑㄧㄥ",t:"1"}] },
+  { word:"不合邏輯", syllables:[{b:"ㄅㄨ",t:"4"},{b:"ㄏㄜ",t:"2"},{b:"ㄌㄨㄛ",t:"2"},{b:"ㄐㄧ",t:"2"}] },
+  { word:"失之交臂", syllables:[{b:"ㄕ",t:"1"},{b:"ㄓ",t:"1"},{b:"ㄐㄧㄠ",t:"1"},{b:"ㄅㄧ",t:"4"}] },
+  { word:"擠壓", syllables:[{b:"ㄐㄧ",t:"3"},{b:"ㄧㄚ",t:"1"}] },
+  { word:"排擠", syllables:[{b:"ㄆㄞ",t:"2"},{b:"ㄐㄧ",t:"3"}] },
+  { word:"擠眉弄眼", syllables:[{b:"ㄐㄧ",t:"3"},{b:"ㄇㄟ",t:"2"},{b:"ㄋㄨㄥ",t:"4"},{b:"ㄧㄢ",t:"3"}] },
+  { word:"仰人鼻息", syllables:[{b:"ㄧㄤ",t:"3"},{b:"ㄖㄣ",t:"2"},{b:"ㄅㄧ",t:"2"},{b:"ㄒㄧ",t:"2"}] },
+  { word:"令人扼腕", syllables:[{b:"ㄌㄧㄥ",t:"4"},{b:"ㄖㄣ",t:"2"},{b:"ㄜ",t:"4"},{b:"ㄨㄢ",t:"4"}] },
+  { word:"娓娓而談", syllables:[{b:"ㄨㄟ",t:"3"},{b:"ㄨㄟ",t:"3"},{b:"ㄦ",t:"2"},{b:"ㄊㄢ",t:"2"}] },
+  { word:"渙然冰釋", syllables:[{b:"ㄏㄨㄢ",t:"4"},{b:"ㄖㄢ",t:"2"},{b:"ㄅㄧㄥ",t:"1"},{b:"ㄕ",t:"4"}] },
+  { word:"調劑", syllables:[{b:"ㄊㄧㄠ",t:"2"},{b:"ㄐㄧ",t:"4"}] },
+  { word:"藥劑", syllables:[{b:"ㄧㄠ",t:"4"},{b:"ㄐㄧ",t:"4"}] },
+  { word:"殺戮", syllables:[{b:"ㄕㄚ",t:"1"},{b:"ㄌㄨ",t:"4"}] },
+  { word:"同心戮力", syllables:[{b:"ㄊㄨㄥ",t:"2"},{b:"ㄒㄧㄣ",t:"1"},{b:"ㄌㄨ",t:"4"},{b:"ㄌㄧ",t:"4"}] },
+  { word:"膠帶", syllables:[{b:"ㄐㄧㄠ",t:"1"},{b:"ㄉㄞ",t:"4"}] },
+  { word:"膠卷", syllables:[{b:"ㄐㄧㄠ",t:"1"},{b:"ㄐㄩㄢ",t:"3"}] },
+  { word:"如膠似漆", syllables:[{b:"ㄖㄨ",t:"2"},{b:"ㄐㄧㄠ",t:"1"},{b:"ㄙ",t:"4"},{b:"ㄑㄧ",t:"1"}] },
+  { word:"謬論", syllables:[{b:"ㄇㄧㄡ",t:"4"},{b:"ㄌㄨㄣ",t:"4"}] },
+  { word:"謬誤", syllables:[{b:"ㄇㄧㄡ",t:"4"},{b:"ㄨ",t:"4"}] },
+  { word:"荒謬絕倫", syllables:[{b:"ㄏㄨㄤ",t:"1"},{b:"ㄇㄧㄡ",t:"4"},{b:"ㄐㄩㄝ",t:"2"},{b:"ㄌㄨㄣ",t:"2"}] },
+];
+
+const TONE_MARKS = { '1':'', '2':'ˊ', '3':'ˇ', '4':'ˋ', '5':'˙' };
+
+/* ========================================================
+   拼音 → 注音 對照表(用於 pinyin-pro 若回傳拼音時轉回注音)
+   ======================================================== */
+// 聲母
+const INITIALS = {
+  'b':'ㄅ','p':'ㄆ','m':'ㄇ','f':'ㄈ',
+  'd':'ㄉ','t':'ㄊ','n':'ㄋ','l':'ㄌ',
+  'g':'ㄍ','k':'ㄎ','h':'ㄏ',
+  'j':'ㄐ','q':'ㄑ','x':'ㄒ',
+  'zh':'ㄓ','ch':'ㄔ','sh':'ㄕ','r':'ㄖ',
+  'z':'ㄗ','c':'ㄘ','s':'ㄙ',
+};
+// 韻母(包含整體認讀音節)
+const FINALS = {
+  'a':'ㄚ','o':'ㄛ','e':'ㄜ','ê':'ㄝ','er':'ㄦ',
+  'ai':'ㄞ','ei':'ㄟ','ao':'ㄠ','ou':'ㄡ',
+  'an':'ㄢ','en':'ㄣ','ang':'ㄤ','eng':'ㄥ','ong':'ㄨㄥ',
+  'i':'ㄧ','ia':'ㄧㄚ','ie':'ㄧㄝ','iao':'ㄧㄠ','iu':'ㄧㄡ','iou':'ㄧㄡ',
+  'ian':'ㄧㄢ','in':'ㄧㄣ','iang':'ㄧㄤ','ing':'ㄧㄥ','iong':'ㄩㄥ',
+  'u':'ㄨ','ua':'ㄨㄚ','uo':'ㄨㄛ','uai':'ㄨㄞ','ui':'ㄨㄟ','uei':'ㄨㄟ',
+  'uan':'ㄨㄢ','un':'ㄨㄣ','uen':'ㄨㄣ','uang':'ㄨㄤ','ueng':'ㄨㄥ',
+  'ü':'ㄩ','ue':'ㄩㄝ','üe':'ㄩㄝ','uan2':'ㄩㄢ','ün':'ㄩㄣ',
+  'v':'ㄩ','ve':'ㄩㄝ','van':'ㄩㄢ','vn':'ㄩㄣ',
+};
+// 整體認讀音節(零聲母情形)
+const WHOLE = {
+  'yi':'ㄧ','ya':'ㄧㄚ','ye':'ㄧㄝ','yao':'ㄧㄠ','you':'ㄧㄡ',
+  'yan':'ㄧㄢ','yin':'ㄧㄣ','yang':'ㄧㄤ','ying':'ㄧㄥ','yong':'ㄩㄥ',
+  'wu':'ㄨ','wa':'ㄨㄚ','wo':'ㄨㄛ','wai':'ㄨㄞ','wei':'ㄨㄟ',
+  'wan':'ㄨㄢ','wen':'ㄨㄣ','wang':'ㄨㄤ','weng':'ㄨㄥ',
+  'yu':'ㄩ','yue':'ㄩㄝ','yuan':'ㄩㄢ','yun':'ㄩㄣ',
+};
+
+function pinyinToZhuyin(py) {
+  // py 形如 "lou4" / "miàn" / "lòu" / "lou"(可能含或不含聲調)
+  if (!py) return { b:'', t:'1' };
+  let raw = py.trim().toLowerCase();
+  // 取出聲調(從聲調符號或結尾數字)
+  let tone = '1';
+  // 聲調符號表
+  const toneMap = {
+    'ā':['a','1'],'á':['a','2'],'ǎ':['a','3'],'à':['a','4'],
+    'ō':['o','1'],'ó':['o','2'],'ǒ':['o','3'],'ò':['o','4'],
+    'ē':['e','1'],'é':['e','2'],'ě':['e','3'],'è':['e','4'],
+    'ī':['i','1'],'í':['i','2'],'ǐ':['i','3'],'ì':['i','4'],
+    'ū':['u','1'],'ú':['u','2'],'ǔ':['u','3'],'ù':['u','4'],
+    'ǖ':['ü','1'],'ǘ':['ü','2'],'ǚ':['ü','3'],'ǜ':['ü','4'],
+    'ń':['n','2'],'ň':['n','3'],
+  };
+  let cleaned = '';
+  for (const ch of raw) {
+    if (toneMap[ch]) {
+      cleaned += toneMap[ch][0];
+      if (tone === '1') tone = toneMap[ch][1];
+    } else {
+      cleaned += ch;
+    }
+  }
+  // 若結尾是數字,取數字當聲調
+  const m = cleaned.match(/^([a-zü]+)(\d)?$/);
+  if (m) {
+    cleaned = m[1];
+    if (m[2]) tone = m[2];
+  }
+  // 輕聲(0 或 5)
+  if (tone === '0') tone = '5';
+
+  // 分聲母與韻母
+  let initial = '', final = cleaned;
+  // 嘗試 2 字母聲母 (zh/ch/sh)
+  if (/^(zh|ch|sh)/.test(cleaned)) {
+    initial = cleaned.slice(0,2);
+    final = cleaned.slice(2);
+  } else if (/^[bpmfdtnlgkhjqxrzcs]/.test(cleaned)) {
+    initial = cleaned.slice(0,1);
+    final = cleaned.slice(1);
+  }
+  // 特殊:整體認讀(零聲母 y/w 開頭)
+  if (!initial && WHOLE[cleaned]) {
+    return { b: WHOLE[cleaned], t: tone };
+  }
+  // ü 處理:j/q/x + u → 實為 j/q/x + ü
+  if (['j','q','x','y'].includes(initial) && (final.startsWith('u'))) {
+    final = 'ü' + final.slice(1);
+  }
+  // zh/ch/sh/r/z/c/s + i 為空韻
+  if (['zh','ch','sh','r','z','c','s'].includes(initial) && final === 'i') {
+    return { b: INITIALS[initial] || '', t: tone };
+  }
+
+  const initBp = INITIALS[initial] || '';
+  let finalBp = FINALS[final] || '';
+  // 退化嘗試:把 'v' 視為 'ü'
+  if (!finalBp && final.includes('v')) {
+    finalBp = FINALS[final.replace(/v/g,'ü')] || '';
+  }
+  // 找不到就直接 fallback 為原字串(讓使用者看到問題)
+  if (!finalBp && !initBp) return { b: cleaned, t: tone };
+  return { b: initBp + finalBp, t: tone };
+}
+
+/* ========================================================
+   詞語 → 注音 自動轉換 (使用 pinyin-pro)
+   ======================================================== */
+function wordToSyllables(word) {
+  if (typeof pinyinPro === 'undefined' || !pinyinPro.pinyin) {
+    throw new Error('注音轉換函式庫尚未載入,請檢查網路連線');
+  }
+  // 先試用 zhuyin pattern
+  let arr;
+  try {
+    arr = pinyinPro.pinyin(word, {
+      toneType: 'symbol',
+      type: 'array',
+      pattern: 'zhuyin',
+      nonZh: 'removed',
+    });
+  } catch (e) { arr = null; }
+
+  // 檢查是否回傳了真正的注音(含 ㄅ-ㄩ 範圍 U+3105-U+3129)
+  const hasZhuyin = arr && arr.some(s => /[\u3105-\u3129]/.test(s));
+
+  if (hasZhuyin) {
+    return arr.map(s => {
+      let tone = '1';
+      if (s.includes('ˊ')) tone = '2';
+      else if (s.includes('ˇ')) tone = '3';
+      else if (s.includes('ˋ')) tone = '4';
+      else if (s.includes('˙')) tone = '5';
+      const b = s.replace(/[ˊˇˋ˙\s]/g, '');
+      return { b, t: tone };
+    });
+  }
+
+  // Fallback:取拼音再自行轉注音
+  const py = pinyinPro.pinyin(word, {
+    toneType: 'num',  // 改用數字聲調 (lou4)
+    type: 'array',
+    nonZh: 'removed',
+    v: true,
+  });
+  return py.map(p => pinyinToZhuyin(p));
+}
+
+/* ========================================================
+   題庫狀態:預設 / 自訂
+   ======================================================== */
+const DEFAULT_QUESTIONS = QUESTIONS;
+let activeQuestions = DEFAULT_QUESTIONS;
+let isCustom = false;
+
+// 嘗試從 localStorage 還原使用者上次的自訂題庫
+try {
+  const saved = localStorage.getItem('customWords');
+  if (saved) {
+    const list = JSON.parse(saved);
+    if (Array.isArray(list) && list.length > 0) {
+      // 等 pinyin-pro 載入後再處理(setTimeout 延後)
+      window.addEventListener('load', () => {
+        try {
+          const built = buildCustomQuestions(list);
+          if (built.length > 0) {
+            activeQuestions = built;
+            isCustom = true;
+            updateBankBar();
+            questions = shuffle(activeQuestions);
+            currentIdx = 0;
+            renderQuestion();
+          }
+        } catch (e) { /* ignore */ }
+      });
+    }
+  }
+} catch (e) { /* ignore */ }
+
+function buildCustomQuestions(words) {
+  const out = [];
+  for (const w of words) {
+    const trimmed = w.trim();
+    if (!trimmed) continue;
+    const syllables = wordToSyllables(trimmed);
+    if (syllables.length === 0) continue;
+    out.push({ word: trimmed, syllables });
+  }
+  return out;
+}
+
+function updateBankBar() {
+  const badge = document.getElementById('bankBadge');
+  const count = document.getElementById('bankCount');
+  if (isCustom) {
+    badge.textContent = '✏️ 自訂題庫';
+    badge.classList.add('custom');
+  } else {
+    badge.textContent = '📚 預設題庫';
+    badge.classList.remove('custom');
+  }
+  count.textContent = `(共 ${activeQuestions.length} 題)`;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+let questions = shuffle(activeQuestions);
+let currentIdx = 0;
+let autoPlay = false;
+
+const zhuyinArea = document.getElementById('zhuyinArea');
+const progressText = document.getElementById('progressText');
+const progressFill = document.getElementById('progressFill');
+const btnPlay = document.getElementById('btnPlay');
+const btnSlow = document.getElementById('btnSlow');
+const btnAuto = document.getElementById('btnAuto');
+const btnPrev = document.getElementById('btnPrev');
+const btnNext = document.getElementById('btnNext');
+const answerGrid = document.getElementById('answerGrid');
+const answerBlock = document.getElementById('answerBlock');
+const quizCard = document.getElementById('quizCard');
+const finishCard = document.getElementById('finishCard');
+const finishCount = document.getElementById('finishCount');
+const btnShowAll = document.getElementById('btnShowAll');
+const btnRestart = document.getElementById('btnRestart');
+const btnBack = document.getElementById('btnBack');
+
+function renderQuestion() {
+  const q = questions[currentIdx];
+  zhuyinArea.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'zhuyin-row';
+
+  q.syllables.forEach(syl => {
+    const sylDiv = document.createElement('div');
+    sylDiv.className = 'syllable';
+    const isLight = syl.t === '5';
+    if (isLight) sylDiv.classList.add('light');
+
+    const cleanBopomofo = syl.b.replace(/[ˊˇˋ˙]/g, '');
+
+    const bDiv = document.createElement('div');
+    bDiv.className = 'bopomofo';
+    [...cleanBopomofo].forEach(ch => {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      bDiv.appendChild(s);
+    });
+
+    sylDiv.appendChild(bDiv);
+
+    if (isLight) {
+      const lightDot = document.createElement('div');
+      lightDot.className = 'tone-light';
+      lightDot.textContent = '˙';
+      sylDiv.appendChild(lightDot);
+    } else if (syl.t !== '1') {
+      const tDiv = document.createElement('div');
+      tDiv.className = 'tone';
+      tDiv.textContent = TONE_MARKS[syl.t] || '';
+      sylDiv.appendChild(tDiv);
+    }
+    row.appendChild(sylDiv);
+  });
+
+  zhuyinArea.appendChild(row);
+
+  progressText.textContent = `第 ${currentIdx + 1} / ${questions.length} 題`;
+  progressFill.style.width = ((currentIdx + 1) / questions.length * 100) + '%';
+
+  btnPrev.disabled = currentIdx === 0;
+  // 最後一題:按鈕變成「我寫完了」,點下進入結算頁
+  if (currentIdx === questions.length - 1) {
+    btnNext.disabled = false;
+    btnNext.textContent = '✅ 我寫完了';
+  } else {
+    btnNext.disabled = false;
+    btnNext.textContent = '下一題 →';
+  }
+
+  if (autoPlay) {
+    setTimeout(() => speak(1), 350);
+  }
+}
+
+function renderAnswerList() {
+  answerGrid.innerHTML = '';
+  questions.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'answer-item';
+    item.innerHTML = `
+      <span class="num">${i + 1}</span>
+      <span class="word">${q.word}</span>
+    `;
+    answerGrid.appendChild(item);
+  });
+}
+
+let voices = [];
+function loadVoices() { voices = speechSynthesis.getVoices(); }
+loadVoices();
+if (typeof speechSynthesis !== 'undefined') {
+  speechSynthesis.onvoiceschanged = loadVoices;
+}
+
+function pickZhVoice() {
+  if (!voices.length) loadVoices();
+  let v = voices.find(v => /zh[-_]TW/i.test(v.lang));
+  if (v) return v;
+  v = voices.find(v => /zh[-_]HK/i.test(v.lang))
+   || voices.find(v => /zh[-_]CN/i.test(v.lang))
+   || voices.find(v => /^zh/i.test(v.lang));
+  return v || null;
+}
+
+function speak(rate = 1) {
+  if (!('speechSynthesis' in window)) {
+    alert('您的瀏覽器不支援語音朗讀功能。');
+    return;
+  }
+  speechSynthesis.cancel();
+  const q = questions[currentIdx];
+  const utt = new SpeechSynthesisUtterance(q.word);
+  utt.lang = 'zh-TW';
+  utt.rate = rate;
+  utt.pitch = 1;
+  const v = pickZhVoice();
+  if (v) utt.voice = v;
+  speechSynthesis.speak(utt);
+
+  const btn = rate < 1 ? btnSlow : btnPlay;
+  btn.classList.add('speaking');
+  setTimeout(() => btn.classList.remove('speaking'), 600);
+}
+
+btnPlay.addEventListener('click', () => speak(1));
+btnSlow.addEventListener('click', () => speak(0.25));
+
+btnAuto.addEventListener('click', () => {
+  autoPlay = !autoPlay;
+  btnAuto.classList.toggle('active', autoPlay);
+  btnAuto.setAttribute('aria-pressed', String(autoPlay));
+  btnAuto.textContent = autoPlay ? '🔁 自動朗讀:開' : '🔁 自動朗讀:關';
+  if (autoPlay) speak(1);
+});
+
+btnPrev.addEventListener('click', () => {
+  if (currentIdx > 0) { currentIdx--; renderQuestion(); }
+});
+btnNext.addEventListener('click', () => {
+  if (currentIdx < questions.length - 1) {
+    currentIdx++;
+    renderQuestion();
+  } else {
+    showFinish();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  // 結算頁時鍵盤不切題
+  if (finishCard.style.display !== 'none') return;
+  if (e.key === 'ArrowLeft' && currentIdx > 0) { currentIdx--; renderQuestion(); }
+  else if (e.key === 'ArrowRight') {
+    if (currentIdx < questions.length - 1) { currentIdx++; renderQuestion(); }
+    else { showFinish(); }
+  }
+  else if (e.key === ' ') { e.preventDefault(); speak(1); }
+});
+
+renderQuestion();
+setTimeout(loadVoices, 200);
+
+/* ===== 結算頁 ===== */
+function showFinish() {
+  if ('speechSynthesis' in window) speechSynthesis.cancel();
+  quizCard.style.display = 'none';
+  finishCard.style.display = 'block';
+  finishCount.textContent = questions.length;
+  // 進入結算頁時答案預設隱藏,需要按鈕才顯示
+  answerBlock.style.display = 'none';
+  btnShowAll.textContent = '📖 顯示全部答案';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+btnShowAll.addEventListener('click', () => {
+  if (answerBlock.style.display === 'none') {
+    renderAnswerList();
+    answerBlock.style.display = 'block';
+    btnShowAll.textContent = '🙈 隱藏答案';
+    setTimeout(() => {
+      answerBlock.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  } else {
+    answerBlock.style.display = 'none';
+    btnShowAll.textContent = '📖 顯示全部答案';
+  }
+});
+
+btnRestart.addEventListener('click', () => {
+  questions = shuffle(activeQuestions);
+  currentIdx = 0;
+  finishCard.style.display = 'none';
+  quizCard.style.display = 'block';
+  renderQuestion();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+btnBack.addEventListener('click', () => {
+  finishCard.style.display = 'none';
+  quizCard.style.display = 'block';
+  renderQuestion();
+});
+
+/* ===== 自訂題庫對話框 ===== */
+const customModal = document.getElementById('customModal');
+const customInput = document.getElementById('customInput');
+const customError = document.getElementById('customError');
+const btnOpenCustom = document.getElementById('btnOpenCustom');
+const btnCancelCustom = document.getElementById('btnCancelCustom');
+const btnApplyCustom = document.getElementById('btnApplyCustom');
+
+function openCustomModal() {
+  // 把當前自訂內容(若有)放回 textarea
+  try {
+    const saved = localStorage.getItem('customWords');
+    if (saved) {
+      const list = JSON.parse(saved);
+      if (Array.isArray(list)) customInput.value = list.join('\n');
+    }
+  } catch (e) { /* ignore */ }
+  customError.style.display = 'none';
+  customModal.style.display = 'flex';
+  setTimeout(() => customInput.focus(), 50);
+}
+
+function closeCustomModal() {
+  customModal.style.display = 'none';
+}
+
+btnOpenCustom.addEventListener('click', openCustomModal);
+btnCancelCustom.addEventListener('click', closeCustomModal);
+
+// 點空白處(背景)關閉
+customModal.addEventListener('click', (e) => {
+  if (e.target === customModal) closeCustomModal();
+});
+// Esc 關閉
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && customModal.style.display !== 'none') closeCustomModal();
+});
+
+btnApplyCustom.addEventListener('click', () => {
+  const text = customInput.value;
+  const rawWords = text.split(/[\n\r]+/).map(s => s.trim()).filter(Boolean);
+  if (rawWords.length === 0) {
+    customError.textContent = '請至少輸入一個詞語(每行一個)。';
+    customError.style.display = 'block';
+    return;
+  }
+  if (typeof pinyinPro === 'undefined') {
+    customError.textContent = '注音轉換套件尚未載入,請檢查網路連線後重試。';
+    customError.style.display = 'block';
+    return;
+  }
+  let built;
+  try {
+    built = buildCustomQuestions(rawWords);
+  } catch (err) {
+    customError.textContent = '轉換注音時發生錯誤:' + err.message;
+    customError.style.display = 'block';
+    return;
+  }
+  if (built.length === 0) {
+    customError.textContent = '沒有可用的中文詞語,請確認輸入內容。';
+    customError.style.display = 'block';
+    return;
+  }
+  // 套用
+  activeQuestions = built;
+  isCustom = true;
+  try { localStorage.setItem('customWords', JSON.stringify(rawWords)); } catch (e) { /* ignore */ }
+  updateBankBar();
+  // 結算頁若顯示中,回到題目頁
+  finishCard.style.display = 'none';
+  quizCard.style.display = 'block';
+  questions = shuffle(activeQuestions);
+  currentIdx = 0;
+  renderQuestion();
+  closeCustomModal();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// 初始化題庫列顯示
+updateBankBar();
+</script>
 </body>
 </html>
