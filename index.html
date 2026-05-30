@@ -258,6 +258,22 @@
   }
   .timer-chip.warn { background: var(--accent); color: white; animation: pulse 0.5s ease infinite alternate; }
   @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.08); } }
+  .timer-wrap { display: inline-flex; align-items: center; gap: 4px; }
+  .timer-add {
+    background: var(--success);
+    color: white;
+    border: none;
+    border-radius: 99px;
+    padding: 4px 10px;
+    font-family: inherit;
+    font-weight: 900;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+  }
+  .timer-add:hover { transform: translateY(-1px); box-shadow: 0 3px 0 rgba(0,0,0,0.15); }
+  .timer-add:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(0,0,0,0.1); }
 
   /* ========== 卡片 ========== */
   .card {
@@ -720,7 +736,10 @@
   <div class="progress-row">
     <div class="progress-text" id="progressText">第 1 / 1 題</div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-    <div class="timer-chip" id="timerChip" style="display:none;">--</div>
+    <div class="timer-wrap" id="timerWrap" style="display:none;">
+      <button class="timer-add" id="btnAddTime" title="+30 秒">+30s</button>
+      <div class="timer-chip" id="timerChip">--</div>
+    </div>
   </div>
 
   <!-- 題目卡 -->
@@ -838,6 +857,7 @@
         <button data-v="5">5 秒</button>
         <button data-v="10">10 秒</button>
         <button data-v="15">15 秒</button>
+        <button data-v="30">30 秒</button>
       </div>
     </div>
 
@@ -1499,11 +1519,11 @@ function renderQuestion() {
 function startTimer() {
   clearInterval(timerInterval);
   if (settings.timer === 0) {
-    timerChip.style.display = 'none';
+    $('timerWrap').style.display = 'none';
     return;
   }
   timerLeft = settings.timer;
-  timerChip.style.display = 'inline-block';
+  $('timerWrap').style.display = 'inline-flex';
   timerChip.classList.remove('warn');
   timerChip.textContent = `⏱ ${timerLeft}s`;
   timerInterval = setInterval(() => {
@@ -1523,6 +1543,15 @@ function startTimer() {
     if (timerLeft <= 3) timerChip.classList.add('warn');
   }, 1000);
 }
+
+// +30 秒按鈕
+$('btnAddTime').addEventListener('click', () => {
+  if (settings.timer === 0) return;
+  timerLeft += 30;
+  timerChip.textContent = `⏱ ${timerLeft}s`;
+  if (timerLeft > 3) timerChip.classList.remove('warn');
+  toast('+30 秒');
+});
 
 /* =========================================================
    朗讀
