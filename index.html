@@ -421,6 +421,15 @@
     border-radius: 10px;
     font-family: 'Noto Serif TC', serif;
     border: 1px solid var(--line);
+    transition: all 0.2s;
+  }
+  .answer-item.marked-correct {
+    background: rgba(74, 157, 111, 0.12);
+    border-color: var(--success);
+  }
+  .answer-item.marked-wrong {
+    background: rgba(217, 68, 54, 0.12);
+    border-color: var(--accent);
   }
   .answer-item .num {
     font-weight: 700;
@@ -432,7 +441,44 @@
     padding: 2px 6px;
     text-align: center;
   }
-  .answer-item .word { font-weight: 500; font-size: 16px; letter-spacing: 1px; color: var(--ink); }
+  .answer-item .word { font-weight: 500; font-size: 16px; letter-spacing: 1px; color: var(--ink); flex: 1; }
+  .mark-buttons { display: flex; gap: 4px; }
+  .mark-btn {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    color: var(--muted);
+    font-weight: 900;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .mark-btn:hover { transform: scale(1.1); }
+  .mark-btn.correct.on { background: var(--success); color: white; border-color: var(--success); }
+  .mark-btn.wrong.on { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .retry-bar {
+    margin-top: 14px;
+    padding: 12px;
+    background: rgba(217, 68, 54, 0.08);
+    border-radius: 10px;
+    border: 1px dashed var(--accent);
+    text-align: center;
+    display: none;
+  }
+  .retry-bar.show { display: block; animation: fadeIn 0.3s ease; }
+  .retry-bar .info {
+    font-size: 14px;
+    color: var(--accent);
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .retry-bar .btn { margin: 0 auto; }
 
   /* ========== 對話框 ========== */
   .modal {
@@ -668,8 +714,12 @@
     </div>
 
     <div class="answer-block" id="answerBlock" style="display:none;">
-      <div class="answer-block-title">📋 本次考題順序與答案</div>
+      <div class="answer-block-title">📋 對答案 ・ 點 ✗ 標記寫錯的題目</div>
       <div class="answer-grid" id="answerGrid"></div>
+      <div class="retry-bar" id="retryBar">
+        <div class="info" id="retryInfo">已標記 0 題錯誤</div>
+        <button class="btn btn-primary" id="btnRetryWrong">🔄 只考錯題重考</button>
+      </div>
     </div>
   </div>
 
@@ -1328,6 +1378,7 @@ function startQuiz() {
   questions = pool;
   currentIdx = 0;
   practiceStartTime = Date.now();
+  markStatus = new Array(questions.length).fill(null);
   $('finishCard').style.display = 'none';
   $('quizCard').style.display = 'block';
   renderQuestion();
@@ -1520,15 +1571,55 @@ function showFinish() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+// 用陣列記錄每題標記:'correct' | 'wrong' | null
+let markStatus = [];
+
 function renderAnswerList() {
   const grid = $('answerGrid');
   grid.innerHTML = '';
+  // 初始化標記陣列(若 length 對不上就重設)
+  if (markStatus.length !== questions.length) {
+    markStatus = new Array(questions.length).fill(null);
+  }
   questions.forEach((q, i) => {
     const item = document.createElement('div');
     item.className = 'answer-item';
-    item.innerHTML = `<span class="num">${i + 1}</span><span class="word">${q.word}</span>`;
+    if (markStatus[i] === 'correct') item.classList.add('marked-correct');
+    else if (markStatus[i] === 'wrong') item.classList.add('marked-wrong');
+    item.innerHTML = `
+      <span class="num">${i + 1}</span>
+      <span class="word">${q.word}</span>
+      <span class="mark-buttons">
+        <button class="mark-btn wrong ${markStatus[i]==='wrong'?'on':''}" data-i="${i}" data-m="wrong" title="這題我寫錯了">✗</button>
+      </span>
+    `;
     grid.appendChild(item);
   });
+  // 綁定點擊
+  grid.querySelectorAll('.mark-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = parseInt(btn.dataset.i, 10);
+      const m = btn.dataset.m;
+      // 點同一個再點就取消
+      markStatus[i] = markStatus[i] === m ? null : m;
+      renderAnswerList();
+      updateRetryBar();
+    });
+  });
+  updateRetryBar();
+}
+
+function updateRetryBar() {
+  const wrongCount = markStatus.filter(s => s === 'wrong').length;
+  const bar = $('retryBar');
+  const info = $('retryInfo');
+  if (wrongCount > 0) {
+    bar.classList.add('show');
+    info.textContent = `已標記 ${wrongCount} 題寫錯,可只挑這些重考`;
+  } else {
+    bar.classList.remove('show');
+  }
 }
 
 $('btnShowAll').addEventListener('click', () => {
@@ -1545,6 +1636,32 @@ $('btnShowAll').addEventListener('click', () => {
 });
 $('btnRestart').addEventListener('click', () => {
   startQuiz();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// 只考錯題重考
+$('btnRetryWrong').addEventListener('click', () => {
+  const wrongIdx = markStatus.map((s, i) => s === 'wrong' ? i : -1).filter(i => i >= 0);
+  if (wrongIdx.length === 0) {
+    toast('沒有標記為錯誤的題目');
+    return;
+  }
+  const wrongQuestions = wrongIdx.map(i => questions[i]);
+  // 建立臨時題庫
+  BANKS._retry = {
+    name: `🔄 重考錯題(${wrongQuestions.length} 題)`,
+    questions: wrongQuestions,
+  };
+  // 把錯題作為新一輪 questions
+  questions = shuffle(wrongQuestions);
+  currentIdx = 0;
+  practiceStartTime = Date.now();
+  markStatus = new Array(questions.length).fill(null);
+  $('finishCard').style.display = 'none';
+  $('quizCard').style.display = 'block';
+  renderQuestion();
+  updateBankCount();
+  toast(`開始重考 ${wrongQuestions.length} 題錯題`);
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 $('btnBack').addEventListener('click', () => {
